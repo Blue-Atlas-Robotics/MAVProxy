@@ -2,6 +2,7 @@ description: >
   Support for the Logitech F310 joystick in "D" mode.
 match:
   - Logitech Logitech Dual Action
+  - Logitech Gamepad F310
 controls:
   - channel: 1
     type: axis
