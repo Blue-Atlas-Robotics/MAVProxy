@@ -11,6 +11,13 @@ from pymavlink import mavutil
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
 
+from MAVProxy.modules.mavproxy_fishi.fishbot.pyfishi import utils as fishi_utils
+from MAVProxy.modules.mavproxy_fishi.fishbot.pyfishi import ctrl
+
+repo_dir = fishi_utils.handle_platforms()
+
+config_path = repo_dir + "/test/water_tank/brov2_original.urdf"
+
 msg_types_master = {
     # 'RC_CHANNELS',
     # 'SCALED_PRESSURE3',
@@ -54,17 +61,6 @@ msg_types_gcs = {
 }
 
 
-class Loop:
-
-    message_handlers = {}
-
-    def set_input(self, msgs):
-        pass
-
-    def get_output(self):
-        return []
-
-
 class fishi(mp_module.MPModule):
     toggle = True
 
@@ -76,7 +72,12 @@ class fishi(mp_module.MPModule):
         "qgroundcontrol": {t: None for t in msg_types_gcs}
     }
 
-    loop = Loop()
+    messages_seq = {
+        "robot": {t: 0 for t in msg_types_master},
+        "qgroundcontrol": {t: 0 for t in msg_types_gcs}
+    }
+
+    control_loop = ctrl.Control(config_path)
 
     def __init__(self, mpstate):
         """Initialise module"""
@@ -126,31 +127,21 @@ class fishi(mp_module.MPModule):
         if m.get_type() in self.messages["robot"].keys():
             self.messages["robot"][msg_type] = m.to_dict()
 
-        if m.get_type() == "HEARTBEAT":
-                print(self.messages)
+        # if m.get_type() == "HEARTBEAT":
+        #         print(self.messages)
 
         if m.get_type() == "ATTITUDE":
-            self.loop.set_input(self.messages)
-            self.communicate(self.loop.get_output())
+            self.control_loop.set_input(self.messages)
+            self.communicate(self.control_loop.get_outputs())
 
     def mavlink_packet_slave(self, m):
         '''handle mavlink packets from slave connections'''
 
+        seq_now = m.get_seq()
         msg_type = m.get_type()
-        if m.get_type() in self.messages["qgroundcontrol"].keys():
+        if m.get_type() in self.messages["qgroundcontrol"].keys() and seq_now != self.messages_seq["qgroundcontrol"][msg_type]:
             self.messages["qgroundcontrol"][msg_type] = m.to_dict()
-
-        # TODO handle doubling messages correctly
-        # if self.toggle:
-        #     if m.get_type() == "MANUAL_CONTROL":
-        #         time_now = time.time()
-        #         seq_now = m.get_seq()
-        #         if seq_now == self.prev_seq:
-        #             pass  # Skip dublicates if any
-        #         else:
-        #             print(1/(time_now - self.prev_time))
-        #             self.prev_time = time_now
-        #             self.prev_seq = seq_now
+            self.messages_seq["qgroundcontrol"][msg_type] = seq_now
 
     def communicate(self, outputs):
         for o in outputs:
