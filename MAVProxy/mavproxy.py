@@ -674,6 +674,21 @@ def process_mavlink(slave):
                     if fnmatch.fnmatch(m.get_type().upper(), msg_type.upper()):
                         mpstate.console.writeln('> '+ str(m))
                         break
+
+            # Pass every message to modules who defines mavlink_packet_slave method
+            for (mod,pm) in mpstate.modules:
+                if not hasattr(mod, 'mavlink_packet_slave'):
+                    continue
+                try:
+                    mod.mavlink_packet_slave(m)
+                except Exception as msg:
+                    if mpstate.settings.moddebug == 1:
+                        print(msg)
+                    elif mpstate.settings.moddebug > 1:
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                                  limit=2, file=sys.stdout)
+
     mpstate.status.counters['Slave'] += 1
 
 
