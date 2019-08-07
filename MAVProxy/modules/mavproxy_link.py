@@ -515,7 +515,8 @@ class LinkModule(mp_module.MPModule):
                 self.mpstate.attitude_time_s = att_time
 
         elif mtype in [ "COMMAND_ACK", "MISSION_ACK" ]:
-            self.mpstate.console.writeln("Got MAVLink msg: %s" % m)
+            if not m.command == mavutil.mavlink.MAV_CMD_DO_LAST:
+                self.mpstate.console.writeln("Got MAVLink msg: %s" % m)
 
             if mtype == "COMMAND_ACK" and m.command == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION:
                 if m.result == mavutil.mavlink.MAV_RESULT_ACCEPTED:
