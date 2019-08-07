@@ -62,7 +62,8 @@ msg_types_gcs = {
 
 
 class Fishi(mp_module.MPModule):
-    toggle = True
+    live_log_toggle = False
+    button_pressed = False
 
     prev_time = time.time()
     prev_seq = 0
@@ -86,7 +87,13 @@ class Fishi(mp_module.MPModule):
         ])
         self.add_command('fishi', self.cmd_fishi, "fishi module", ['status', 'set (LOGSETTING)'])
 
+        self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
+
         self.control_loop = ctrl.Control(config_path, log_file_path=repo_dir + "/test/sitl/" + mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
+
+    def unload(self):
+        print("Stopping vision context ...")
+        ctrl.ctx.stop()  # TODO, understand why it does not shut down child processes.
 
     def usage(self):
         '''show help on command line options'''
@@ -107,11 +114,11 @@ class Fishi(mp_module.MPModule):
 
     def status(self):
         '''returns information about module'''
-        return str(self.control_loop.get_log_tail())
+        return ""
 
     def cmd_toggle(self):
         '''returns information about module'''
-        self.toggle = not self.toggle
+        self.live_log_toggle = not self.live_log_toggle
 
     def idle_task(self):
         '''called rapidly by mavproxy'''
@@ -125,8 +132,11 @@ class Fishi(mp_module.MPModule):
         if m.get_type() in self.messages["robot"].keys():
             self.messages["robot"][msg_type] = m.to_dict()
 
-        # if m.get_type() == "HEARTBEAT":
-        #         print(self.messages)
+        if m.get_type() == "HEARTBEAT" and self.live_log_toggle:
+            pass
+
+        if m.get_type() == "SENSOR_OFFSETS" and self.live_log_toggle:
+            self.control_loop.dump_tail = True
 
         if m.get_type() == "ATTITUDE":
             self.control_loop.set_input(self.messages)
@@ -137,9 +147,18 @@ class Fishi(mp_module.MPModule):
 
         seq_now = m.get_seq()
         msg_type = m.get_type()
-        if m.get_type() in self.messages["qgroundcontrol"].keys() and seq_now != self.messages_seq["qgroundcontrol"][msg_type]:
-            self.messages["qgroundcontrol"][msg_type] = m.to_dict()
+        msg_dict = m.to_dict()
+
+        if msg_type in self.messages["qgroundcontrol"].keys() and seq_now != self.messages_seq["qgroundcontrol"][msg_type]:
+            self.messages["qgroundcontrol"][msg_type] = msg_dict
             self.messages_seq["qgroundcontrol"][msg_type] = seq_now
+
+        if msg_type == "MANUAL_CONTROL":
+            if msg_dict["buttons"] == 512 and not self.button_pressed:
+                self.live_log_toggle = not self.live_log_toggle
+                self.button_pressed = True
+            if msg_dict["buttons"] == 0 and self.button_pressed:
+                self.button_pressed = False
 
     def communicate(self, outputs):
         for o in outputs:
@@ -148,10 +167,11 @@ class Fishi(mp_module.MPModule):
                     self.master.target_system,
                     self.master.target_component,
                     mavutil.mavlink.MAV_CMD_DO_LAST,
-                    0,  # confirmation
+                    False,  # confirmation
                     0, *o["pwms"])
 
 
 def init(mpstate):
     '''initialise module'''
     return Fishi(mpstate)
+
