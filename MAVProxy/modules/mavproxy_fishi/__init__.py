@@ -5,17 +5,17 @@ Oleksandr Slovak, August 2019
 '''
 
 import time
+import os
 
 from pymavlink import mavutil
 
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
 
-from MAVProxy.modules.mavproxy_fishi.fishbot.pyfishi import utils as fishi_utils
-from MAVProxy.modules.mavproxy_fishi.fishbot.pyfishi import ctrl
+from fishbot.pyfishi import utils as fishi_utils
+from fishbot.pyfishi import ctrl
 
 repo_dir = fishi_utils.handle_platforms()
-
 config_path = repo_dir + "/test/water_tank/brov2_original.urdf"
 
 msg_types_master = {
@@ -61,7 +61,7 @@ msg_types_gcs = {
 }
 
 
-class fishi(mp_module.MPModule):
+class Fishi(mp_module.MPModule):
     toggle = True
 
     prev_time = time.time()
@@ -77,18 +77,16 @@ class fishi(mp_module.MPModule):
         "qgroundcontrol": {t: 0 for t in msg_types_gcs}
     }
 
-    control_loop = ctrl.Control(config_path)
-
     def __init__(self, mpstate):
         """Initialise module"""
-        super(fishi, self).__init__(mpstate, "fishi", public=True, multi_vehicle=True)
+        super(Fishi, self).__init__(mpstate, "fishi", public=True, multi_vehicle=True)
 
-        self.msgs = {}
-
-        self.fishi_settings = mp_settings.MPSettings(
-            [('verbose', bool, False),
-             ])
+        self.fishi_settings = mp_settings.MPSettings([
+            ('verbose', bool, False),
+        ])
         self.add_command('fishi', self.cmd_fishi, "fishi module", ['status', 'set (LOGSETTING)'])
+
+        self.control_loop = ctrl.Control(config_path, log_file_path=repo_dir + "/test/sitl/" + mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
 
     def usage(self):
         '''show help on command line options'''
@@ -109,7 +107,7 @@ class fishi(mp_module.MPModule):
 
     def status(self):
         '''returns information about module'''
-        return str(self.mpstate.sysid_outputs)
+        return str(self.control_loop.get_log_tail())
 
     def cmd_toggle(self):
         '''returns information about module'''
@@ -117,7 +115,7 @@ class fishi(mp_module.MPModule):
 
     def idle_task(self):
         '''called rapidly by mavproxy'''
-        # TODO, think how to utilize that
+        # TODO, get log chunks from ctrl_log queue pickle and append to file
         pass
 
     def mavlink_packet(self, m):
@@ -156,4 +154,4 @@ class fishi(mp_module.MPModule):
 
 def init(mpstate):
     '''initialise module'''
-    return fishi(mpstate)
+    return Fishi(mpstate)
