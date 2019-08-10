@@ -183,7 +183,7 @@ class MPState(object):
               MPSetting('script_fatal', bool, False, 'fatal error on bad script', tab='Debug'),
               MPSetting('compdebug', int, 0, 'Computation Debug Mask', range=(0,3), tab='Debug'),
               MPSetting('flushlogs', bool, False, 'Flush logs on every packet'),
-              MPSetting('requireexit', bool, False, 'Require exit command'),
+              MPSetting('requireexit', bool, True, 'Require exit command'),
               MPSetting('wpupdates', bool, True, 'Announce waypoint updates'),
 
               MPSetting('basealt', int, 0, 'Base Altitude', range=(0,30000), increment=1, tab='Altitude'),
