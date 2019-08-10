@@ -5,7 +5,7 @@ Oleksandr Slovak, August 2019
 '''
 
 import time
-import os
+from pprint import pprint
 
 from pymavlink import mavutil
 
@@ -70,7 +70,8 @@ class Fishi(mp_module.MPModule):
 
     messages = {
         "robot": {t: None for t in msg_types_master},
-        "qgroundcontrol": {t: None for t in msg_types_gcs}
+        "qgroundcontrol": {t: None for t in msg_types_gcs},
+        "opt": {"seq": 0, "name": None, "idx": None, "value": None}
     }
 
     messages_seq = {
@@ -109,8 +110,21 @@ class Fishi(mp_module.MPModule):
             self.fishi_settings.command(args[1:])
         elif args[0] == "toggle":
             self.cmd_toggle()
+        elif args[0] == "opt":
+            self.cmd_opt(args)
         else:
             print(self.usage())
+
+    def cmd_opt(self, args):
+        assert len(args) == 4
+
+        self.messages["opt"]["name"] = args[1]
+        self.messages["opt"]["idx"] = int(args[2])
+        self.messages["opt"]["value"] = float(args[3])
+
+        self.messages["opt"]["seq"] = self.messages["opt"]["seq"] + 1
+
+        print(self.messages["opt"])
 
     def status(self):
         '''returns information about module'''
@@ -169,6 +183,8 @@ class Fishi(mp_module.MPModule):
                     mavutil.mavlink.MAV_CMD_DO_LAST,
                     False,  # confirmation
                     0, *o["pwms"])
+            else:
+                pprint(o)
 
 
 def init(mpstate):
