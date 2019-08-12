@@ -12,8 +12,8 @@ from pymavlink import mavutil
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
 
-from fishbot.pyfishi import utils as fishi_utils
-from fishbot.pyfishi import ctrl
+from pyfishi import utils as fishi_utils
+from pyfishi import ctrl
 
 repo_dir = fishi_utils.handle_platforms()
 config_path = repo_dir + "/test/water_tank/brov2_original.urdf"
