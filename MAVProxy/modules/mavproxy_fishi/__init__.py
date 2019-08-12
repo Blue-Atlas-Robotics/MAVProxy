@@ -90,11 +90,12 @@ class Fishi(mp_module.MPModule):
 
         self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
 
-        self.control_loop = ctrl.Control(config_path, log_file_path=repo_dir + "/test/sitl/" + mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
+        self.control_loop = ctrl.Control(config_path, log_file_path=mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
 
     def unload(self):
-        print("Stopping vision context ...")
-        ctrl.ctx.stop()  # TODO, understand why it does not shut down child processes.
+        pass
+        # print("Stopping vision context ...")
+        # ctrl.ctx.stop()  # TODO, do a trick with separate process.
 
     def usage(self):
         '''show help on command line options'''
