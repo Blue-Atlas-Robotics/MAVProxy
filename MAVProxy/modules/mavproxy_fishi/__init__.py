@@ -71,7 +71,8 @@ class Fishi(mp_module.MPModule):
     messages = {
         "robot": {t: None for t in msg_types_master},
         "qgroundcontrol": {t: None for t in msg_types_gcs},
-        "opt": {"seq": 0, "name": None, "idx": None, "value": None}
+        "opt": {"seq": 0, "name": None, "idx": None, "value": None},
+        "cmd": {"terminate": False},
     }
 
     messages_seq = {
@@ -93,7 +94,7 @@ class Fishi(mp_module.MPModule):
         self.control_loop = ctrl.Control(config_path, log_file_path=mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
 
     def unload(self):
-        pass
+        self.messages["cmd"]["terminate"] = True
         # print("Stopping vision context ...")
         # ctrl.ctx.stop()  # TODO, do a trick with separate process.
 
@@ -117,13 +118,20 @@ class Fishi(mp_module.MPModule):
             print(self.usage())
 
     def cmd_opt(self, args):
-        assert len(args) == 4
 
-        self.messages["opt"]["name"] = args[1]
-        self.messages["opt"]["idx"] = int(args[2])
-        self.messages["opt"]["value"] = float(args[3])
+        if len(args) != 4:
+            self.messages["opt"]["name"] = "test"
+            self.messages["opt"]["idx"] = 0
+            self.messages["opt"]["value"] = 0.0
 
-        self.messages["opt"]["seq"] = self.messages["opt"]["seq"] + 1
+            self.messages["opt"]["seq"] = self.messages["opt"]["seq"] + 1
+        else:
+
+            self.messages["opt"]["name"] = args[1]
+            self.messages["opt"]["idx"] = int(args[2])
+            self.messages["opt"]["value"] = float(args[3])
+
+            self.messages["opt"]["seq"] = self.messages["opt"]["seq"] + 1
 
         print(self.messages["opt"])
 
