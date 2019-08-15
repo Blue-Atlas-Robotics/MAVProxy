@@ -87,7 +87,7 @@ class MissionEditorEventThread(threading.Thread):
                     # likely same reason why "timeout setting WP_LOITER_RAD"
                     #comes back:
                     #TODO: fix timeout issue
-                    self.module('rally').rallyloader.last_change = time.time()
+                    self.module('rally').set_last_change(time.time())
 
                 elif event_type == me_event.MEE_GET_WP_DEFAULT_ALT:
                     self.mp_misseditor.gui_event_queue_lock.acquire()
@@ -181,11 +181,13 @@ class MissionEditorMain(object):
         self.mavlink_message_queue = multiproc.Queue()
         self.mavlink_message_queue_handler = threading.Thread(target=self.mavlink_message_queue_handler)
         self.mavlink_message_queue_handler.start()
-
+        self.needs_unloading = False
 
     def mavlink_message_queue_handler(self):
         while not self.time_to_quit:
             while True:
+                if self.time_to_quit:
+                    return
                 if not self.mavlink_message_queue.empty():
                     break
                 time.sleep(0.1)
@@ -214,7 +216,7 @@ class MissionEditorMain(object):
         if self.last_unload_check_time + self.unload_check_interval < now:
             self.last_unload_check_time = now
             if not self.child.is_alive():
-                self.needs_unloading = True
+                self.close()
 
 
     def mavlink_packet(self, m):
@@ -231,7 +233,7 @@ class MissionEditorMain(object):
             if (self.num_wps_expected == 0):
                 #I haven't asked for WPs, or these messages are duplicates
                 #of msgs I've already received.
-                self.console.error("No waypoint load started (from Editor).")
+                self.mpstate.console.error("No waypoint load started (from Editor).")
             #I only clear the mission in the Editor if this was a read event
             elif (self.num_wps_expected == -1):
                 self.gui_event_queue.put(MissionEditorEvent(
@@ -245,7 +247,7 @@ class MissionEditorMain(object):
             #write has been sent by the mission editor:
             elif (self.num_wps_expected > 1):
                 if (m.count != self.num_wps_expected):
-                    self.console.error("Unepxected waypoint count from APM after write (Editor)")
+                    self.mpstate.console.error("Unepxected waypoint count from APM after write (Editor)")
                 #since this is a write operation from the Editor there
                 #should be no need to update number of table rows
 
@@ -308,11 +310,14 @@ class MissionEditorMain(object):
 
         self.child.terminate()
 
+        self.mavlink_message_queue_handler.time_to_quit = True
         self.mavlink_message_queue_handler.join()
 
         self.event_queue_lock.acquire()
         self.event_queue.put(MissionEditorEvent(me_event.MEE_TIME_TO_QUIT));
         self.event_queue_lock.release()
+
+        self.needs_unloading = True
 
     def read_waypoints(self):
         self.module('wp').cmd_wp(['list'])
