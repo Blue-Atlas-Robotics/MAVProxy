@@ -1147,6 +1147,9 @@ if __name__ == '__main__':
     mpstate.status.exit = False
     mpstate.command_map = command_map
     mpstate.continue_mode = opts.continue_mode
+    # queues for logging
+    mpstate.logqueue = Queue.Queue()
+    mpstate.logqueue_raw = Queue.Queue()
 
     if opts.speech:
         # start the speech-dispatcher early, so it doesn't inherit any ports from
@@ -1293,10 +1296,6 @@ if __name__ == '__main__':
         yappi.start()
 
     if opts.log:
-        # queues for logging
-        mpstate.logqueue = Queue.Queue()
-        mpstate.logqueue_raw = Queue.Queue()
-
         # log all packets from the master, for later replay
         open_telemetry_logs(logpath_telem, logpath_telem_raw)
     else:
