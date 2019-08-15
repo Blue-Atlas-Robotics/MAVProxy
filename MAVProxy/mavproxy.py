@@ -1104,6 +1104,7 @@ if __name__ == '__main__':
     parser.add_option("--state-basedir", default=None, help="base directory for logs and aircraft directories")
     parser.add_option("--version", action='store_true', help="version information")
     parser.add_option("--default-modules", default="log,signing,wp,rally,fence,param,relay,tuneopt,arm,mode,calibration,rc,auxopt,misc,cmdlong,battery,terrain,output,adsb,layout", help='default module list')
+    parser.add_option("--log", action='store_true', default=False, help="Log messages to file")
 
     (opts, args) = parser.parse_args()
     if len(args) != 0:
@@ -1140,10 +1141,6 @@ if __name__ == '__main__':
     mpstate.status.exit = False
     mpstate.command_map = command_map
     mpstate.continue_mode = opts.continue_mode
-    # queues for logging
-    mpstate.logqueue = Queue.Queue()
-    mpstate.logqueue_raw = Queue.Queue()
-
 
     if opts.speech:
         # start the speech-dispatcher early, so it doesn't inherit any ports from
@@ -1289,8 +1286,16 @@ if __name__ == '__main__':
         import yappi    # We do the import here so that we won't barf if run normally and yappi not available
         yappi.start()
 
-    # log all packets from the master, for later replay
-    open_telemetry_logs(logpath_telem, logpath_telem_raw)
+    if opts.log:
+        # queues for logging
+        mpstate.logqueue = Queue.Queue()
+        mpstate.logqueue_raw = Queue.Queue()
+
+        # log all packets from the master, for later replay
+        open_telemetry_logs(logpath_telem, logpath_telem_raw)
+    else:
+        mpstate.logqueue = None
+        mpstate.logqueue_raw = None
 
     # run main loop as a thread
     mpstate.status.thread = threading.Thread(target=main_loop, name='main_loop')

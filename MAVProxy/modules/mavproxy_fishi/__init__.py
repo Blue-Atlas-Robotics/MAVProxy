@@ -20,7 +20,7 @@ config_path = repo_dir + "/test/water_tank/brov2_original.urdf"
 
 msg_types_master = {
     # 'RC_CHANNELS',
-    # 'SCALED_PRESSURE3',
+    'SCALED_PRESSURE2',
     # 'POWER_STATUS',
     # 'SYSTEM_TIME',
     # 'GPS_RAW_INT',
@@ -38,7 +38,7 @@ msg_types_master = {
     # 'COMMAND_ACK',
     'HEARTBEAT',
     'ATTITUDE',
-    # 'EKF_STATUS_REPORT',
+    'EKF_STATUS_REPORT',
     # 'AHRS3',
     'SENSOR_OFFSETS',
     # 'GPS_GLOBAL_ORIGIN',
@@ -46,7 +46,7 @@ msg_types_master = {
     # 'AHRS2',
     # 'SERVO_OUTPUT_RAW',
     # 'AHRS',
-    # 'RAW_IMU',
+    'RAW_IMU',
     # 'GLOBAL_POSITION_INT',
     # 'HOME_POSITION',
     # 'BATTERY_STATUS',
@@ -69,15 +69,15 @@ class Fishi(mp_module.MPModule):
     prev_seq = 0
 
     messages = {
-        "robot": {t: None for t in msg_types_master},
-        "qgroundcontrol": {t: None for t in msg_types_gcs},
+        "master": {t: None for t in msg_types_master},
+        "GCS": {t: None for t in msg_types_gcs},
         "opt": {"seq": 0, "name": None, "idx": None, "value": None},
         "cmd": {"terminate": False},
     }
 
     messages_seq = {
-        "robot": {t: 0 for t in msg_types_master},
-        "qgroundcontrol": {t: 0 for t in msg_types_gcs}
+        "master": {t: 0 for t in msg_types_master},
+        "GCS": {t: 0 for t in msg_types_gcs}
     }
 
     def __init__(self, mpstate):
@@ -95,8 +95,7 @@ class Fishi(mp_module.MPModule):
 
     def unload(self):
         self.messages["cmd"]["terminate"] = True
-        # print("Stopping vision context ...")
-        # ctrl.ctx.stop()  # TODO, do a trick with separate process.
+        self.control_loop.set_input(self.messages)
 
     def usage(self):
         '''show help on command line options'''
@@ -152,8 +151,8 @@ class Fishi(mp_module.MPModule):
         '''handle mavlink packets'''
 
         msg_type = m.get_type()
-        if m.get_type() in self.messages["robot"].keys():
-            self.messages["robot"][msg_type] = m.to_dict()
+        if m.get_type() in self.messages["master"].keys():
+            self.messages["master"][msg_type] = m.to_dict()
 
         if m.get_type() == "HEARTBEAT" and self.live_log_toggle:
             pass
@@ -172,9 +171,9 @@ class Fishi(mp_module.MPModule):
         msg_type = m.get_type()
         msg_dict = m.to_dict()
 
-        if msg_type in self.messages["qgroundcontrol"].keys() and seq_now != self.messages_seq["qgroundcontrol"][msg_type]:
-            self.messages["qgroundcontrol"][msg_type] = msg_dict
-            self.messages_seq["qgroundcontrol"][msg_type] = seq_now
+        if msg_type in self.messages["GCS"].keys() and seq_now != self.messages_seq["GCS"][msg_type]:
+            self.messages["GCS"][msg_type] = msg_dict
+            self.messages_seq["GCS"][msg_type] = seq_now
 
         if msg_type == "MANUAL_CONTROL":
             if msg_dict["buttons"] == 512 and not self.button_pressed:
