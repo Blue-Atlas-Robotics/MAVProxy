@@ -4,19 +4,17 @@ Fishi Module
 Oleksandr Slovak, August 2019
 '''
 
+import os
 import time
 from pprint import pprint
 
-from pymavlink import mavutil
-
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
-
-from pyfishi import utils as fishi_utils
 from pyfishi import ctrl
+from pymavlink import mavutil
 
-repo_dir = fishi_utils.handle_platforms()
-config_path = repo_dir + "/test/water_tank/brov2_original.urdf"
+config_path = os.path.abspath(
+    os.path.join(os.path.dirname(ctrl.__file__), "..", "config", "brov2_original.urdf"))
 
 msg_types_master = {
     # 'RC_CHANNELS',
@@ -91,7 +89,8 @@ class Fishi(mp_module.MPModule):
 
         self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
 
-        self.control_loop = ctrl.Control(config_path, log_file_path=mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
+        self.control_loop = ctrl.Control(config_path,
+                                         log_file_path=mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
 
     def unload(self):
         self.messages["cmd"]["terminate"] = True
@@ -198,4 +197,3 @@ class Fishi(mp_module.MPModule):
 def init(mpstate):
     '''initialise module'''
     return Fishi(mpstate)
-
