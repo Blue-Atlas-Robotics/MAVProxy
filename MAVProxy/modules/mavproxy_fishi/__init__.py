@@ -178,6 +178,11 @@ class Fishi(mp_module.MPModule):
             if (msg_dict["buttons"] & 1 << 9) and not self.button_pressed:
                 self.live_log_toggle = not self.live_log_toggle
                 self.button_pressed = True
+
+            if (msg_dict["buttons"] & 1) and not self.button_pressed:
+                self.master.set_mode(20)
+                self.button_pressed = True
+
             if not msg_dict["buttons"] and self.button_pressed:
                 self.button_pressed = False
 
