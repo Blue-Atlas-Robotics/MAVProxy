@@ -175,10 +175,10 @@ class Fishi(mp_module.MPModule):
             self.messages_seq["GCS"][msg_type] = seq_now
 
         if msg_type == "MANUAL_CONTROL":
-            if msg_dict["buttons"] == 512 and not self.button_pressed:
+            if (msg_dict["buttons"] & 1 << 9) and not self.button_pressed:
                 self.live_log_toggle = not self.live_log_toggle
                 self.button_pressed = True
-            if msg_dict["buttons"] == 0 and self.button_pressed:
+            if not msg_dict["buttons"] and self.button_pressed:
                 self.button_pressed = False
 
     def communicate(self, outputs):
