@@ -87,7 +87,7 @@ class Fishi(mp_module.MPModule):
         ])
         self.add_command('fishi', self.cmd_fishi, "fishi module", ['status', 'set (LOGSETTING)'])
 
-        self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
+        # self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
 
         self.control_loop = ctrl.Control(config_path,
                                          log_file_path=mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
