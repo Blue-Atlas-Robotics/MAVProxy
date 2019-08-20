@@ -117,9 +117,13 @@ class Fishi(mp_module.MPModule):
         elif args[0] == "opt":
             self.cmd_opt(args)
         elif args[0] == "rotate":
-            self.control_loop.rotate_log.set()
+            self.cmp_rotate()
         else:
             print(self.usage())
+
+    def cmp_rotate(self):
+        print("\n")
+        self.control_loop.rotate_log.set()
 
     def cmd_opt(self, args):
 
