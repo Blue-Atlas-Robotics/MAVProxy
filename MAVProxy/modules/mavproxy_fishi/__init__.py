@@ -90,12 +90,15 @@ class Fishi(mp_module.MPModule):
         # self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
         self.master.set_mode(19)  # RAW, it will work even if pymavlink does not have a mode mapping updated
 
-        self.control_loop = ctrl.Control(config_path,
-                                         log_file_path=mpstate.status.logdir + "/ctrl_log.pcl")  # TODO fix log dir
+        self.control_loop = ctrl.Control(config_path, log_folder_path=mpstate.status.logdir)
 
     def unload(self):
+        print("\n")
         self.messages["cmd"]["terminate"] = True
         self.control_loop.set_input(self.messages)
+        self.control_loop.stop_log.set()
+        while self.control_loop.rotate_log.is_set():
+            pass
 
     def usage(self):
         '''show help on command line options'''
@@ -113,6 +116,8 @@ class Fishi(mp_module.MPModule):
             self.cmd_toggle()
         elif args[0] == "opt":
             self.cmd_opt(args)
+        elif args[0] == "rotate":
+            self.control_loop.rotate_log.set()
         else:
             print(self.usage())
 
@@ -158,7 +163,7 @@ class Fishi(mp_module.MPModule):
             pass
 
         if m.get_type() == "SENSOR_OFFSETS" and self.live_log_toggle:
-            self.control_loop.dump_tail = True
+            self.control_loop.dump_tail.set()
 
         if m.get_type() == "ATTITUDE":
             self.control_loop.set_input(self.messages)
