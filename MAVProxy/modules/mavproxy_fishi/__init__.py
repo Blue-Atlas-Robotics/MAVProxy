@@ -8,6 +8,8 @@ import os
 import time
 from pprint import pprint
 
+from importlib import reload
+
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
 from pyfishi import ctrl
@@ -36,6 +38,7 @@ msg_types_master = {
     # 'COMMAND_ACK',
     'HEARTBEAT',
     'ATTITUDE',
+    'ATTITUDE_QUATERNION',
     'EKF_STATUS_REPORT',
     # 'AHRS3',
     'SENSOR_OFFSETS',
@@ -89,11 +92,13 @@ class Fishi(mp_module.MPModule):
 
         # self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
         self.master.set_mode(19)  # RAW, it will work even if pymavlink does not have a mode mapping updated
-
+        reload(ctrl)
         self.control_loop = ctrl.Control(config_path, log_folder_path=mpstate.status.logdir)
 
     def unload(self):
         print("\n")
+        self.master.arducopter_disarm()
+        self.master.set_mode(19)
         self.messages["cmd"]["terminate"] = True
         self.control_loop.set_input(self.messages)
         self.control_loop.stop_log.set()
@@ -169,7 +174,7 @@ class Fishi(mp_module.MPModule):
         if m.get_type() == "SENSOR_OFFSETS" and self.live_log_toggle:
             self.control_loop.dump_tail.set()
 
-        if m.get_type() == "ATTITUDE":
+        if m.get_type() == "ATTITUDE_QUATERNION":
             self.control_loop.set_input(self.messages)
             self.communicate(self.control_loop.get_outputs())
 
