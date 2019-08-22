@@ -97,7 +97,7 @@ class Fishi(mp_module.MPModule):
 
     def unload(self):
         print("\n")
-        self.master.arducopter_disarm()
+        # self.master.arducopter_disarm()  # Do not do disarm to prevent EKF to reinitialize.
         self.master.set_mode(19)
         self.messages["cmd"]["terminate"] = True
         self.control_loop.set_input(self.messages)
