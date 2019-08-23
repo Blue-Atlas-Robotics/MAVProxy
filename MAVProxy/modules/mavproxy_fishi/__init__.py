@@ -94,15 +94,15 @@ class Fishi(mp_module.MPModule):
         self.control_loop = ctrl.Control(config_path, log_folder_path=mpstate.status.logdir)
 
         # TODO, arguments to fihsi module for auto arm
-        # self.master.set_mode(19)  # RAW, it will work even if pymavlink does not have a mode mapping updated
-        self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
-        self.master.arducopter_arm()
+        self.master.set_mode(19)  # MANUAL, it will work even if pymavlink does not have a mode mapping updated
+        # self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
+        # self.master.arducopter_arm()
 
     def unload(self):
         print("\n")
         # TODO, arguments to fihsi module for auto arm
         # self.master.arducopter_disarm()  # Do not do disarm to prevent EKF to reinitialize.
-        # self.master.set_mode(19)
+        self.master.set_mode(19)
         self.messages["cmd"]["terminate"] = True
         self.control_loop.set_input(self.messages)
         self.control_loop.stop_log.set()
