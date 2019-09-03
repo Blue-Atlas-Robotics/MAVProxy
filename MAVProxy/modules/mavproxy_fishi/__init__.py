@@ -9,14 +9,25 @@ import time
 from pprint import pprint
 
 from importlib import reload
+from types import ModuleType
 
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
-from pyfishi import ctrl
+import pyfishi.manager as mng
 from pymavlink import mavutil
 
-config_path = os.path.abspath(
-    os.path.join(os.path.dirname(ctrl.__file__), "..", "config", "brov2_original.urdf"))
+
+def rreload(module):
+    """Recursively reload modules."""
+    reload(module)
+    for attribute_name in dir(module):
+        attribute = getattr(module, attribute_name)
+        if type(attribute) is ModuleType:
+            rreload(attribute)
+
+# TODO, replace with proper config
+# config_path = os.path.abspath(
+#     os.path.join(os.path.dirname(ctrl.__file__), "..", "config", "brov2_original.urdf"))
 
 msg_types_master = {
     # 'RC_CHANNELS',
@@ -90,8 +101,8 @@ class Fishi(mp_module.MPModule):
         ])
         self.add_command('fishi', self.cmd_fishi, "fishi module", ['status', 'set (LOGSETTING)'])
 
-        reload(ctrl)
-        self.control_loop = ctrl.Control(config_path, log_folder_path=mpstate.status.logdir)
+        rreload(mng)
+        self.control_loop = mng.Manager(log_folder_path=mpstate.status.logdir)
 
         # TODO, arguments to fihsi module for auto arm
         self.master.set_mode(19)  # MANUAL, it will work even if pymavlink does not have a mode mapping updated
@@ -105,6 +116,7 @@ class Fishi(mp_module.MPModule):
         self.master.set_mode(19)
         self.messages["cmd"]["terminate"] = True
         self.control_loop.set_input(self.messages)
+        self.control_loop.external_end.close()
         self.control_loop.stop_log.set()
         while self.control_loop.rotate_log.is_set():
             pass
@@ -180,7 +192,7 @@ class Fishi(mp_module.MPModule):
 
         if m.get_type() == "ATTITUDE_QUATERNION":
             self.control_loop.set_input(self.messages)
-            self.communicate(self.control_loop.get_outputs())
+            self.communicate(self.control_loop.get_output())
 
     def mavlink_packet_slave(self, m):
         '''handle mavlink packets from slave connections'''
