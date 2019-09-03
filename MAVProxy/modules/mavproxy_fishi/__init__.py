@@ -5,6 +5,7 @@ Oleksandr Slovak, August 2019
 '''
 
 import os
+import sys
 import time
 from pprint import pprint
 
@@ -16,14 +17,34 @@ from MAVProxy.modules.lib import mp_settings
 import pyfishi.manager as mng
 from pymavlink import mavutil
 
+reloaded = set()
 
-def rreload(module):
+
+def rreload(module, name="", depth=0, max_depth=10):
     """Recursively reload modules."""
+    global reloaded
     reload(module)
+    reloaded = reloaded.union({name})
     for attribute_name in dir(module):
+        skip = False
+        for skip_name in ["sys", "os", "mp", "pickle", "np", "quat", "threading"]:
+            if skip_name in attribute_name:
+                skip = True
+        if skip:
+            continue
+
+        if attribute_name in sys.builtin_module_names:
+            continue
+        if depth > max_depth:
+            raise Exception('Too deep recursion for rreload, please, revisit project structure')
+
+        if attribute_name in reloaded:
+            continue
+
         attribute = getattr(module, attribute_name)
         if type(attribute) is ModuleType:
-            rreload(attribute)
+            rreload(attribute, name=attribute_name, depth=depth+1)
+
 
 # TODO, replace with proper config
 # config_path = os.path.abspath(
@@ -114,7 +135,7 @@ class Fishi(mp_module.MPModule):
         # TODO, arguments to fihsi module for auto arm
         # self.master.arducopter_disarm()  # Do not do disarm to prevent EKF to reinitialize.
         self.master.set_mode(19)
-        self.messages["cmd"]["terminate"] = True
+        self.messages["cmd"] = {"terminate": True}
         self.control_loop.set_input(self.messages)
         self.control_loop.external_end.close()
         self.control_loop.stop_log.set()
