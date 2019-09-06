@@ -17,6 +17,8 @@ from MAVProxy.modules.lib import mp_settings
 import pyfishi.manager as mng
 from pymavlink import mavutil
 
+from .joystick import key_map
+
 reloaded = set()
 
 
@@ -227,13 +229,19 @@ class Fishi(mp_module.MPModule):
             self.messages_seq["GCS"][msg_type] = seq_now
 
         if msg_type == "MANUAL_CONTROL":
-            if (msg_dict["buttons"] & 1 << 9) and not self.button_pressed:
+            if (msg_dict["buttons"] == key_map["LB"]) and not self.button_pressed:
                 self.live_log_toggle = not self.live_log_toggle
                 self.button_pressed = True
 
-            if (msg_dict["buttons"] & 1) and not self.button_pressed:
+            if (msg_dict["buttons"] == key_map["A"]) and not self.button_pressed:
                 self.master.set_mode(20)
                 self.button_pressed = True
+
+            if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.button_pressed:
+                pass
+                # TODO, implement get method
+                # self.cmd_opt(["off_t", "2", "0.05"])
+                # self.button_pressed = True
 
             if not msg_dict["buttons"] and self.button_pressed:
                 self.button_pressed = False
