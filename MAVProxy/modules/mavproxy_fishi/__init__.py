@@ -164,7 +164,7 @@ class Fishi(mp_module.MPModule):
             print(self.status())
         elif args[0] == "set":
             self.fishi_settings.command(args[1:])
-        elif args[0] == "toggle":
+        elif args[0] == "live":
             self.cmd_toggle()
         elif args[0] == "opt":
             self.cmd_opt(args)
