@@ -77,7 +77,7 @@ msg_types_master = {
     # 'AHRS3',
     'SENSOR_OFFSETS',
     # 'GPS_GLOBAL_ORIGIN',
-    # 'SYS_STATUS',
+    'SYS_STATUS',
     # 'AHRS2',
     # 'SERVO_OUTPUT_RAW',
     # 'AHRS',
@@ -106,7 +106,15 @@ class Fishi(mp_module.MPModule):
     messages = {
         "master": {t: None for t in msg_types_master},
         "GCS": {t: None for t in msg_types_gcs},
-        "opt": {"seq": 0, "name": None, "idx": None, "value": None},
+        "opt": {
+            "set_seq": 0,
+            "get_seq": 0,
+            "trim_seq": 0,
+            "name": "off_t",
+            "idx": 2,
+            "value": None,
+            "trim": 0.01,
+        },
         "cmd": {"terminate": False},
     }
 
@@ -160,6 +168,10 @@ class Fishi(mp_module.MPModule):
             self.cmd_toggle()
         elif args[0] == "opt":
             self.cmd_opt(args)
+        elif args[0] == "do_trim":
+            self.cmd_do_trim(args)
+        elif args[0] == "set_trim":
+            self.cmd_set_trim(args)
         elif args[0] == "rotate":
             self.cmp_rotate()
         else:
@@ -169,23 +181,55 @@ class Fishi(mp_module.MPModule):
         print("\n")
         self.control_loop.rotate_log.set()
 
+    def cmd_do_trim(self, args):
+
+        if len(args) == 4:
+            self.messages["opt"]["name"] = args[1]
+            self.messages["opt"]["idx"] = int(args[2])
+            self.messages["opt"]["trim"] = float(args[3])
+
+            self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
+        else:
+            pass
+
+    def cmd_set_trim(self, args):
+        if len(args) == 4:
+            self.messages["opt"]["name"] = args[1]
+            self.messages["opt"]["idx"] = int(args[2])
+            self.messages["opt"]["trim"] = float(args[3])
+
+            print({"name": self.messages["opt"]["name"], "trim": self.messages["opt"]["trim"]})
+        else:
+            pass
+
+    def cmd_joy_trim(self, direction):
+
+        if direction == "up":
+            if self.messages["opt"]["trim"] < 0:
+                self.messages["opt"]["trim"] = -self.messages["opt"]["trim"]
+
+            self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
+
+        elif direction == "down":
+            if self.messages["opt"]["trim"] > 0:
+                self.messages["opt"]["trim"] = -self.messages["opt"]["trim"]
+
+            self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
+        else:
+            pass
+
     def cmd_opt(self, args):
 
         if len(args) != 4:
-            self.messages["opt"]["name"] = "test"
-            self.messages["opt"]["idx"] = 0
-            self.messages["opt"]["value"] = 0.0
-
-            self.messages["opt"]["seq"] = self.messages["opt"]["seq"] + 1
+            self.messages["opt"]["name"] = None
+            self.messages["opt"]["set_seq"] = self.messages["opt"]["set_seq"] + 1
         else:
 
             self.messages["opt"]["name"] = args[1]
             self.messages["opt"]["idx"] = int(args[2])
             self.messages["opt"]["value"] = float(args[3])
 
-            self.messages["opt"]["seq"] = self.messages["opt"]["seq"] + 1
-
-        print(self.messages["opt"])
+            self.messages["opt"]["set_seq"] = self.messages["opt"]["set_seq"] + 1
 
     def status(self):
         '''returns information about module'''
@@ -229,22 +273,36 @@ class Fishi(mp_module.MPModule):
             self.messages_seq["GCS"][msg_type] = seq_now
 
         if msg_type == "MANUAL_CONTROL":
-            if (msg_dict["buttons"] == key_map["LB"]) and not self.button_pressed:
-                self.live_log_toggle = not self.live_log_toggle
-                self.button_pressed = True
+            self.__handle_manual_control(msg_dict)
 
-            if (msg_dict["buttons"] == key_map["A"]) and not self.button_pressed:
-                self.master.set_mode(20)
-                self.button_pressed = True
+    def __handle_manual_control(self, msg_dict):
+        if (msg_dict["buttons"] == key_map["LB"]) and not self.button_pressed:
+            self.live_log_toggle = not self.live_log_toggle
+            self.button_pressed = True
 
-            if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.button_pressed:
-                pass
-                # TODO, implement get method
-                # self.cmd_opt(["off_t", "2", "0.05"])
-                # self.button_pressed = True
+        if (msg_dict["buttons"] == key_map["A"]) and not self.button_pressed:
+            self.master.set_mode(20)
+            self.button_pressed = True
 
-            if not msg_dict["buttons"] and self.button_pressed:
-                self.button_pressed = False
+        if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.button_pressed:
+            self.cmd_joy_trim("up")
+            self.button_pressed = True
+
+        if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.button_pressed:
+            self.cmd_joy_trim("down")
+            self.button_pressed = True
+
+        if (msg_dict["buttons"] == key_map["X"]) and not self.button_pressed:
+            self.cmd_set_trim(("", "off_t", "2", "0.01"))
+            self.button_pressed = True
+
+        if (msg_dict["buttons"] == key_map["Y"]) and not self.button_pressed:
+            self.cmd_set_trim(("", "trim_yaw", "0", "1"))
+            self.button_pressed = True
+
+        # Idle joy reset
+        if not msg_dict["buttons"] and self.button_pressed:
+            self.button_pressed = False
 
     def communicate(self, outputs):
         for o in outputs:
@@ -254,7 +312,7 @@ class Fishi(mp_module.MPModule):
                     self.master.target_component,
                     mavutil.mavlink.MAV_CMD_DO_LAST,
                     False,  # confirmation
-                    0, *o["pwms"])
+                    0, *o["value"])
             else:
                 pprint(o)
 
