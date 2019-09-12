@@ -21,36 +21,24 @@ from .joystick import key_map
 
 reloaded = set()
 
-
-def rreload(module, name="", depth=0, max_depth=10):
-    """Recursively reload modules."""
-    global reloaded
-    reload(module)
-    reloaded = reloaded.union({name})
-    for attribute_name in dir(module):
-        skip = False
-        for skip_name in ["sys", "os", "mp", "pickle", "np", "quat", "threading"]:
-            if skip_name in attribute_name:
-                skip = True
-        if skip:
-            continue
-
-        if attribute_name in sys.builtin_module_names:
-            continue
-        if depth > max_depth:
-            raise Exception('Too deep recursion for rreload, please, revisit project structure')
-
-        if attribute_name in reloaded:
-            continue
-
-        attribute = getattr(module, attribute_name)
-        if type(attribute) is ModuleType:
-            rreload(attribute, name=attribute_name, depth=depth+1)
-
-
-# TODO, replace with proper config
-# config_path = os.path.abspath(
-#     os.path.join(os.path.dirname(ctrl.__file__), "..", "config", "brov2_original.urdf"))
+skip_modules = (
+    "__",
+    "collections",
+    "abc",
+    "sys",
+    "os",
+    "mp",
+    "pickle",
+    "np",
+    "quat",
+    "threading",
+    "py_trees",
+    "ABCMeta",
+    "colr",
+    "traceback",
+    "linecache",
+    "functools",
+)
 
 msg_types_master = {
     # 'RC_CHANNELS',
@@ -94,6 +82,34 @@ msg_types_gcs = {
     'MANUAL_CONTROL',
     # 'HEARTBEAT'
 }
+
+
+def rreload(module, name="", depth=0, max_depth=10, skip_names=skip_modules):
+    """Recursively reload modules."""
+    global reloaded
+    reload(module)
+    reloaded = reloaded.union({name})
+    for attribute_name in dir(module):
+        skip = False
+        for skip_name in skip_names:
+            if skip_name in attribute_name:
+                skip = True
+        if skip:
+            continue
+
+        if attribute_name in sys.builtin_module_names:
+            continue
+
+        if depth > max_depth:
+            raise Exception('Too deep recursion for rreload, please, revisit project structure')
+
+        if attribute_name in reloaded:
+            continue
+
+        attribute = getattr(module, attribute_name)
+        if type(attribute) is ModuleType:
+            print(attribute_name)
+            rreload(attribute, name=attribute_name, depth=depth+1)
 
 
 class Fishi(mp_module.MPModule):
