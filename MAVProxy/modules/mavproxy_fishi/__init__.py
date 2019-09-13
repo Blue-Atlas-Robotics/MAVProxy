@@ -109,15 +109,37 @@ def rreload(module, name="", depth=0, max_depth=10, skip_names=skip_modules):
         attribute = getattr(module, attribute_name)
         if type(attribute) is ModuleType:
             print(attribute_name)
-            rreload(attribute, name=attribute_name, depth=depth+1)
+            rreload(attribute, name=attribute_name, depth=depth + 1)
 
 
 class Fishi(mp_module.MPModule):
     live_log_toggle = False
-    button_pressed = False
+    one_button_pressed = False
+    two_buttons_pressed = False
 
     prev_time = time.time()
     prev_seq = 0
+
+    trim_presets = {
+        "camera": {
+            "index": 0,
+            "presets": (
+                ("", "cam_auto", "0", "1"),
+                ("", "cam_exp", "0", "1"),
+                ("", "cam_gain", "0", "1"),
+                ("", "cam_cbal", "0", "64"),
+                ("", "cam_cbal", "1", "64"),
+                ("", "cam_cbal", "2", "64"),
+            )
+        },
+        "ctrl": {
+            "index": 0,
+            "presets": (
+                ("", "off_t", "2", "0.01"),
+                ("", "trim_yaw", "0", "1")
+            )
+        },
+    }
 
     messages = {
         "master": {t: None for t in msg_types_master},
@@ -214,7 +236,8 @@ class Fishi(mp_module.MPModule):
             self.messages["opt"]["idx"] = int(args[2])
             self.messages["opt"]["trim"] = float(args[3])
 
-            print({"name": self.messages["opt"]["name"], "trim": self.messages["opt"]["trim"]})
+            print("trim: " + self.messages["opt"]["name"] + "[" + str(self.messages["opt"]["idx"]) +
+                  "] : (+-)" + str(self.messages["opt"]["trim"]))
         else:
             pass
 
@@ -292,33 +315,50 @@ class Fishi(mp_module.MPModule):
             self.__handle_manual_control(msg_dict)
 
     def __handle_manual_control(self, msg_dict):
-        if (msg_dict["buttons"] == key_map["LB"]) and not self.button_pressed:
+        if (msg_dict["buttons"] == (key_map["LB"] | key_map["RB"])) and not self.two_buttons_pressed:
             self.live_log_toggle = not self.live_log_toggle
-            self.button_pressed = True
+            self.two_buttons_pressed = True
 
-        if (msg_dict["buttons"] == key_map["A"]) and not self.button_pressed:
+        if (msg_dict["buttons"] == key_map["A"]) and not self.one_button_pressed:
             self.master.set_mode(20)
-            self.button_pressed = True
+            self.one_button_pressed = True
 
-        if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.button_pressed:
+        if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
             self.cmd_joy_trim("up")
-            self.button_pressed = True
+            self.one_button_pressed = True
 
-        if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.button_pressed:
+        if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
             self.cmd_joy_trim("down")
-            self.button_pressed = True
+            self.one_button_pressed = True
 
-        if (msg_dict["buttons"] == key_map["X"]) and not self.button_pressed:
+        if (msg_dict["buttons"] == key_map["X"]) and not self.one_button_pressed:
             self.cmd_set_trim(("", "off_t", "2", "0.01"))
-            self.button_pressed = True
+            self.one_button_pressed = True
 
-        if (msg_dict["buttons"] == key_map["Y"]) and not self.button_pressed:
+        if (msg_dict["buttons"] == key_map["Y"]) and not self.one_button_pressed:
             self.cmd_set_trim(("", "trim_yaw", "0", "1"))
-            self.button_pressed = True
+            self.one_button_pressed = True
+
+        if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
+            self.trim_presets["camera"]["index"] += 1
+            if self.trim_presets["camera"]["index"] >= len(self.trim_presets["camera"]["presets"]):
+                self.trim_presets["camera"]["index"] = len(self.trim_presets["camera"]["presets"]) - 1
+            self.cmd_set_trim(self.trim_presets["camera"]["presets"][self.trim_presets["camera"]["index"]])
+            self.two_buttons_pressed = True
+
+        if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
+            self.trim_presets["camera"]["index"] -= 1
+            if self.trim_presets["camera"]["index"] < 0:
+                self.trim_presets["camera"]["index"] = 0
+            self.cmd_set_trim(self.trim_presets["camera"]["presets"][self.trim_presets["camera"]["index"]])
+            self.two_buttons_pressed = True
 
         # Idle joy reset
-        if not msg_dict["buttons"] and self.button_pressed:
-            self.button_pressed = False
+        if not msg_dict["buttons"] and self.one_button_pressed:
+            self.one_button_pressed = False
+
+        if (msg_dict["buttons"] == 0) or (msg_dict["buttons"] == key_map["RB"]) or (msg_dict["buttons"] == key_map["LB"]) and self.two_buttons_pressed:
+            self.two_buttons_pressed = False
 
     def communicate(self, outputs):
         for o in outputs:
