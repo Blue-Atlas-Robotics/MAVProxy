@@ -135,7 +135,6 @@ class Fishi(mp_module.MPModule):
         "ctrl": {
             "index": 0,
             "presets": (
-                ("", "trim_f_t", "1", "1"),
                 ("", "off_t", "2", "0.01"),
                 ("", "trim_yaw", "0", "1"),
             )
@@ -162,7 +161,7 @@ class Fishi(mp_module.MPModule):
         "GCS": {t: 0 for t in msg_types_gcs}
     }
 
-    def __init__(self, mpstate):
+    def __init__(self, mpstate, **kwargs):
         """Initialise module"""
         super(Fishi, self).__init__(mpstate, "fishi", public=True, multi_vehicle=True)
 
@@ -172,7 +171,7 @@ class Fishi(mp_module.MPModule):
         self.add_command('fishi', self.cmd_fishi, "fishi module", ['status', 'set (LOGSETTING)'])
 
         rreload(mng)
-        self.control_loop = mng.Manager(log_folder_path=mpstate.status.logdir)
+        self.control_loop = mng.Manager(log_folder_path=mpstate.status.logdir, **kwargs)
 
         # TODO, arguments to fihsi module for auto arm
         self.master.set_mode(19)  # MANUAL, it will work even if pymavlink does not have a mode mapping updated
@@ -324,12 +323,20 @@ class Fishi(mp_module.MPModule):
             self.master.set_mode(20)
             self.one_button_pressed = True
 
+        # if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
+        #     self.cmd_joy_trim("up")
+        #     self.one_button_pressed = True
+        #
+        # if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
+        #     self.cmd_joy_trim("down")
+        #     self.one_button_pressed = True
+
         if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
-            self.cmd_joy_trim("up")
+            self.cmd_do_trim(("", "depth_trim", "0", "-0.1"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
-            self.cmd_joy_trim("down")
+            self.cmd_do_trim(("", "depth_trim", "0", "0.1"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["X"]) and not self.one_button_pressed:
@@ -396,6 +403,6 @@ class Fishi(mp_module.MPModule):
                 pprint(o)
 
 
-def init(mpstate):
+def init(mpstate, **kwargs):
     '''initialise module'''
-    return Fishi(mpstate)
+    return Fishi(mpstate, **kwargs)
