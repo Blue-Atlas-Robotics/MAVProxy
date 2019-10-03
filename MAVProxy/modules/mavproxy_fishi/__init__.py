@@ -38,6 +38,7 @@ skip_modules = (
     "traceback",
     "linecache",
     "functools",
+    "xmltd",
 )
 
 msg_types_master = {
