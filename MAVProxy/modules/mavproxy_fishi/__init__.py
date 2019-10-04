@@ -39,6 +39,7 @@ skip_modules = (
     "linecache",
     "functools",
     "xmltd",
+    "splinalg"
 )
 
 msg_types_master = {
