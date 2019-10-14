@@ -395,12 +395,29 @@ class Fishi(mp_module.MPModule):
     def communicate(self, outputs):
         for o in outputs:
             if o["type"] == "pwm":
-                self.master.mav.command_long_send(
-                    self.master.target_system,
-                    self.master.target_component,
-                    mavutil.mavlink.MAV_CMD_DO_LAST,
-                    False,  # confirmation
-                    0, *o["value"])
+
+                time_boot_ms = 0
+                port = 0
+                (chan1_raw, chan2_raw,
+                 chan3_raw, chan4_raw,
+                 chan5_raw, chan6_raw,
+                 chan7_raw, chan8_raw) = o["value"]
+                rssi = 0
+
+                self.master.mav.rc_channels_raw_send(
+                    time_boot_ms,
+                    port,
+                    chan1_raw,
+                    chan2_raw,
+                    chan3_raw,
+                    chan4_raw,
+                    chan5_raw,
+                    chan6_raw,
+                    chan7_raw,
+                    chan8_raw,
+                    rssi
+                )
+
             else:
                 pprint(o)
 
