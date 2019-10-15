@@ -63,6 +63,7 @@ msg_types_master = {
     'HEARTBEAT',
     'ATTITUDE',
     'ATTITUDE_QUATERNION',
+    'RC_CHANNELS_SCALED',
     'EKF_STATUS_REPORT',
     # 'AHRS3',
     'SENSOR_OFFSETS',
