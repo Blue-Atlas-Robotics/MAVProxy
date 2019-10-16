@@ -63,6 +63,7 @@ msg_types_master = {
     'HEARTBEAT',
     'ATTITUDE',
     'ATTITUDE_QUATERNION',
+    'CONTROL_SYSTEM_STATE',
     'RC_CHANNELS_SCALED',
     'EKF_STATUS_REPORT',
     # 'AHRS3',
@@ -177,8 +178,8 @@ class Fishi(mp_module.MPModule):
         self.control_loop = mng.Manager(log_folder_path=mpstate.status.logdir, **kwargs)
 
         # TODO, arguments to fihsi module for auto arm
-        self.master.set_mode(19)  # MANUAL, it will work even if pymavlink does not have a mode mapping updated
-        # self.master.set_mode(20)  # RAW, it will work even if pymavlink does not have a mode mapping updated
+        # self.master.set_mode(19)  # MANUAL, it will work even if pymavlink does not have a mode mapping updated
+
         # self.master.arducopter_arm()
 
     def unload(self):
