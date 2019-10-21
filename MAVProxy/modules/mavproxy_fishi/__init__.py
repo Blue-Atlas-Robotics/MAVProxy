@@ -336,11 +336,11 @@ class Fishi(mp_module.MPModule):
         #     self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
-            self.cmd_do_trim(("", "depth_trim", "0", "-0.1"))
+            self.cmd_do_trim(("", "depth_trim", "0", "-0.2"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
-            self.cmd_do_trim(("", "depth_trim", "0", "0.1"))
+            self.cmd_do_trim(("", "depth_trim", "0", "0.2"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["X"]) and not self.one_button_pressed:
@@ -352,11 +352,11 @@ class Fishi(mp_module.MPModule):
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_RIGHT"]) and not self.one_button_pressed:
-            self.cmd_do_trim(("", "trim_f_t", "1", "10"))
+            self.cmd_do_trim(("", "trim_f_t", "1", "5"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_LEFT"]) and not self.one_button_pressed:
-            self.cmd_do_trim(("", "trim_f_t", "1", "-10"))
+            self.cmd_do_trim(("", "trim_f_t", "1", "-5"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
