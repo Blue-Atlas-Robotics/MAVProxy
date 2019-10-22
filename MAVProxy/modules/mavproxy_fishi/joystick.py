@@ -6,6 +6,8 @@ key_map = {k: 1 << v for k, v in {
     "back": 4,
     "where is the fucking 5 ????": 5,
     "start": 6,
+    "LEFT_STICK_PRESS": 7,
+    "RIGHT_STICK_PRESS": 8,
     "LB": 9,
     "RB": 10,
     "DIGITAL_UP": 11,
