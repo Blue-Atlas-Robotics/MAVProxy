@@ -39,7 +39,8 @@ skip_modules = (
     "linecache",
     "functools",
     "xmltd",
-    "splinalg"
+    "splinalg",
+    "dsp",
 )
 
 msg_types_master = {
@@ -182,10 +183,23 @@ class Fishi(mp_module.MPModule):
 
         # self.master.arducopter_arm()
 
+        # for _ in range(4):
+        #     self.master.mav.manual_control_send(
+        #         self.master.target_system, 0, 0, 0, 0,
+        #         key_map["LEFT_STICK_PRESS"]
+        #     )
+
     def unload(self):
         print("\n")
         # TODO, arguments to fihsi module for auto arm
         # self.master.arducopter_disarm()  # Do not do disarm to prevent EKF to reinitialize.
+
+        # for _ in range(4):
+        #     self.master.mav.manual_control_send(
+        #         self.master.target_system, 0, 0, 0, 0,
+        #         key_map["RIGHT_STICK_PRESS"]
+        #     )
+
         self.master.set_mode(19)
         self.messages["cmd"] = {"terminate": True}
         self.control_loop.set_input(self.messages)
