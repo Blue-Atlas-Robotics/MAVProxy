@@ -113,7 +113,7 @@ def rreload(module, name="", depth=0, max_depth=10, skip_names=skip_modules):
 
         attribute = getattr(module, attribute_name)
         if type(attribute) is ModuleType:
-            print(attribute_name)
+            # print("reloaded: " + attribute_name)
             rreload(attribute, name=attribute_name, depth=depth + 1)
 
 
