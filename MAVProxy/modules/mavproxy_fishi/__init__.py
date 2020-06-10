@@ -129,22 +129,15 @@ class Fishi(mp_module.MPModule):
         "camera": {
             "index": 0,
             "presets": (
-                ("", "cam_auto", "0", "1"),
                 ("", "cam_exp", "0", "1"),
-                ("", "cam_gain", "0", "1"),
                 ("", "cam_cbal", "0", "0.1"),
                 ("", "cam_cbal", "1", "0.1"),
                 ("", "cam_cbal", "2", "0.1"),
                 ("", "cam_cbal", "3", "0.1"),
-            )
-        },
-        "ctrl": {
-            "index": 0,
-            "presets": (
                 ("", "off_t", "2", "0.01"),
-                ("", "trim_yaw", "0", "1"),
+                ("", "trim_pitch", "0", "1"),
             )
-        },
+        }
     }
 
     messages = {
@@ -387,6 +380,20 @@ class Fishi(mp_module.MPModule):
                 self.trim_presets["camera"]["index"] = 0
             self.cmd_set_trim(self.trim_presets["camera"]["presets"][self.trim_presets["camera"]["index"]])
             self.two_buttons_pressed = True
+
+        # if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
+        #     self.trim_presets["ctrl"]["index"] += 1
+        #     if self.trim_presets["ctrl"]["index"] >= len(self.trim_presets["ctrl"]["presets"]):
+        #         self.trim_presets["ctrl"]["index"] = len(self.trim_presets["ctrl"]["presets"]) - 1
+        #     self.cmd_set_trim(self.trim_presets["ctrl"]["presets"][self.trim_presets["ctrl"]["index"]])
+        #     self.two_buttons_pressed = True
+        #
+        # if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
+        #     self.trim_presets["ctrl"]["index"] -= 1
+        #     if self.trim_presets["ctrl"]["index"] < 0:
+        #         self.trim_presets["ctrl"]["index"] = 0
+        #     self.cmd_set_trim(self.trim_presets["ctrl"]["presets"][self.trim_presets["ctrl"]["index"]])
+        #     self.two_buttons_pressed = True
 
         if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
             self.cmd_joy_trim("up")
