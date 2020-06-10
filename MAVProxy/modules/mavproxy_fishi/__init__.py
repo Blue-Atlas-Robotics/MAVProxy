@@ -132,9 +132,10 @@ class Fishi(mp_module.MPModule):
                 ("", "cam_auto", "0", "1"),
                 ("", "cam_exp", "0", "1"),
                 ("", "cam_gain", "0", "1"),
-                ("", "cam_cbal", "0", "64"),
-                ("", "cam_cbal", "1", "64"),
-                ("", "cam_cbal", "2", "64"),
+                ("", "cam_cbal", "0", "0.1"),
+                ("", "cam_cbal", "1", "0.1"),
+                ("", "cam_cbal", "2", "0.1"),
+                ("", "cam_cbal", "3", "0.1"),
             )
         },
         "ctrl": {
@@ -388,18 +389,12 @@ class Fishi(mp_module.MPModule):
             self.two_buttons_pressed = True
 
         if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
-            self.trim_presets["ctrl"]["index"] += 1
-            if self.trim_presets["ctrl"]["index"] >= len(self.trim_presets["ctrl"]["presets"]):
-                self.trim_presets["ctrl"]["index"] = len(self.trim_presets["ctrl"]["presets"]) - 1
-            self.cmd_set_trim(self.trim_presets["ctrl"]["presets"][self.trim_presets["ctrl"]["index"]])
-            self.two_buttons_pressed = True
+            self.cmd_joy_trim("up")
+            self.one_button_pressed = True
 
         if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
-            self.trim_presets["ctrl"]["index"] -= 1
-            if self.trim_presets["ctrl"]["index"] < 0:
-                self.trim_presets["ctrl"]["index"] = 0
-            self.cmd_set_trim(self.trim_presets["ctrl"]["presets"][self.trim_presets["ctrl"]["index"]])
-            self.two_buttons_pressed = True
+            self.cmd_joy_trim("down")
+            self.one_button_pressed = True
 
         # Idle joy reset
         if not msg_dict["buttons"] and self.one_button_pressed:
