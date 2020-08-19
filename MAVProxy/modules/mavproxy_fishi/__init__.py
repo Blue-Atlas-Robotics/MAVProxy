@@ -8,6 +8,8 @@ import os
 import sys
 import time
 from pprint import pprint
+import collections.abc as abc
+import numpy as np
 
 from importlib import reload
 from types import ModuleType
@@ -15,6 +17,7 @@ from types import ModuleType
 from MAVProxy.modules.lib import mp_module
 from MAVProxy.modules.lib import mp_settings
 import pyfishi.manager as mng
+import pyfishi.utils as utils
 from pymavlink import mavutil
 
 from .joystick import key_map
@@ -271,16 +274,28 @@ class Fishi(mp_module.MPModule):
 
     def cmd_opt(self, args):
 
-        if len(args) != 4:
-            self.messages["opt"]["name"] = None
-            self.messages["opt"]["set_seq"] = self.messages["opt"]["set_seq"] + 1
-        else:
-
+        if len(args) == 4:
             self.messages["opt"]["name"] = args[1]
             self.messages["opt"]["idx"] = int(args[2])
             self.messages["opt"]["value"] = float(args[3])
+        elif len(args) == 3:
+            self.messages["opt"]["name"] = args[1]
+            opt_type = utils.nested_type(self.control_loop.opt, self.messages["opt"]["name"])
+            self.messages["opt"]["value"] = opt_type(args[2])
 
-            self.messages["opt"]["set_seq"] = self.messages["opt"]["set_seq"] + 1
+            # Workaround for boolean False
+            if opt_type == bool and (
+                    args[2] == "0" or
+                    args[2] == "false" or
+                    args[2] == "False" or
+                    args[2] == "0.0"
+            ):
+                self.messages["opt"]["value"] = False
+
+        else:
+            self.messages["opt"]["name"] = None
+
+        self.messages["opt"]["set_seq"] = self.messages["opt"]["set_seq"] + 1
 
     def status(self):
         '''returns information about module'''
@@ -402,6 +417,14 @@ class Fishi(mp_module.MPModule):
         if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
             self.cmd_joy_trim("down")
             self.one_button_pressed = True
+
+        if (msg_dict["buttons"] == (key_map["middle"])) and not self.one_button_pressed:
+            self.cmd_opt(("", "debug.do_heat_map", "1"))
+            self.one_button_pressed = True
+
+        if (msg_dict["buttons"] == (key_map["middle"] | key_map["LB"])) and not self.two_buttons_pressed:
+            self.cmd_opt(("", "debug.do_heat_map", "0"))
+            self.two_buttons_pressed = True
 
         # Idle joy reset
         if not msg_dict["buttons"] and self.one_button_pressed:

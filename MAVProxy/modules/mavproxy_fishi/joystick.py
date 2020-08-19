@@ -4,7 +4,7 @@ key_map = {k: 1 << v for k, v in {
     "X": 2,
     "Y": 3,
     "back": 4,
-    "where is the fucking 5 ????": 5,
+    "middle": 5,  # With Logitech logo, yeah, it is a button!
     "start": 6,
     "LEFT_STICK_PRESS": 7,
     "RIGHT_STICK_PRESS": 8,
