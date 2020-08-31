@@ -207,7 +207,45 @@ class Fishi(mp_module.MPModule):
 
     def usage(self):
         '''show help on command line options'''
-        return "Usage: fishi <status|set>"
+        return """
+r -  module load fishi
+t -  module unload fishi
+
+fishi opt - show options
+fishi opt opt_path opt_value - set option
+opt - alias for fishi opt
+
+# Cameras
+cam - alias for "fishi opt ui.cam"
+cam 0
+cam 2
+
+left - alias for "cam 2"
+bot - alias for "cam 0"
+
+# Heat map view
+heat
+heatoff
+
+# Histogram equalization
+hist
+histoff
+
+# Invert colors
+inv
+invoff
+
+# Overlay
+over
+overoff
+
+# Trims:
+dist - trim distance
+yaw - trim yaw
+yaw_right - fishi opt trim_yaw 10
+yaw_left - fishi opt trim_yaw -10
+yaw_forward - fishi opt trim_yaw 0
+"""
 
     def cmd_fishi(self, args):
         '''control behaviour of the module'''
@@ -419,11 +457,11 @@ class Fishi(mp_module.MPModule):
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == (key_map["middle"])) and not self.one_button_pressed:
-            self.cmd_opt(("", "debug.do_heat_map", "1"))
+            self.cmd_opt(("", "ui.heat", "1"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == (key_map["middle"] | key_map["LB"])) and not self.two_buttons_pressed:
-            self.cmd_opt(("", "debug.do_heat_map", "0"))
+            self.cmd_opt(("", "ui.heat", "0"))
             self.two_buttons_pressed = True
 
         # Idle joy reset
