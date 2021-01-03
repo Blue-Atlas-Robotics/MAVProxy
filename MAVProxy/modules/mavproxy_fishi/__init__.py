@@ -420,6 +420,14 @@ yaw_forward - fishi opt trim_yaw 0
             self.cmd_do_trim(("", "trim_f_t", "1", "-5"))
             self.one_button_pressed = True
 
+        if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_RIGHT"])) and not self.two_buttons_pressed:
+            self.cmd_do_trim(("", "trim_yaw", "0", "5"))
+            self.one_button_pressed = True
+
+        if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_LEFT"])) and not self.two_buttons_pressed:
+            self.cmd_do_trim(("", "trim_yaw", "0", "-5"))
+            self.one_button_pressed = True
+
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
             self.trim_presets["camera"]["index"] += 1
             if self.trim_presets["camera"]["index"] >= len(self.trim_presets["camera"]["presets"]):
