@@ -44,6 +44,7 @@ skip_modules = (
     "xmltd",
     "splinalg",
     "dsp",
+    "yaml",
 )
 
 msg_types_master = {
