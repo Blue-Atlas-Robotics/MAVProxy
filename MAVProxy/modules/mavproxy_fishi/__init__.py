@@ -53,7 +53,7 @@ msg_types_master = {
     # 'POWER_STATUS',
     # 'SYSTEM_TIME',
     # 'GPS_RAW_INT',
-    # 'SCALED_PRESSURE',
+    'SCALED_PRESSURE',  # this contains internal thermometer.
     # 'SCALED_IMU3',
     # 'VFR_HUD',
     # 'SIMSTATE',
@@ -398,11 +398,11 @@ yaw_forward - fishi opt trim_yaw 0
         #     self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
-            self.cmd_do_trim(("", "depth_trim", "0", "-0.2"))
+            self.cmd_do_trim(("", "depth_trim", "0", "-0.1"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
-            self.cmd_do_trim(("", "depth_trim", "0", "0.2"))
+            self.cmd_do_trim(("", "depth_trim", "0", "0.1"))
             self.one_button_pressed = True
 
         if (msg_dict["buttons"] == key_map["X"]) and not self.one_button_pressed:
