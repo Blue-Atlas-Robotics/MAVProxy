@@ -264,6 +264,8 @@ yaw_forward - fishi opt trim_yaw 0
             self.cmd_do_trim(args)
         elif args[0] == "set_trim":
             self.cmd_set_trim(args)
+        elif args[0] == "reload_config":
+            self.reload_config(args)
         elif args[0] == "rotate":
             self.cmp_rotate()
         else:
@@ -310,6 +312,16 @@ yaw_forward - fishi opt trim_yaw 0
             self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
         else:
             pass
+
+    def reload_config(self, args):
+        pass
+        # TODO, OLSLO, implement config reload.
+        # with open(self.control_loop.config_file_path) as f:
+        #     import yaml
+        #     config = yaml.load(f, Loader=yaml.FullLoader)
+        #     opt = utils.list_to_array(config)
+
+        # self.messages["opt"]["set_seq"] = self.messages["opt"]["set_seq"] + 1
 
     def cmd_opt(self, args):
 
