@@ -382,22 +382,22 @@ yaw_forward - fishi opt trim_yaw 0
         # Trim left/right doubled
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_RIGHT"])) and not self.two_buttons_pressed:
             self.cmd_do_trim(("", "trim_f_t", "1", "10"))
-            self.one_button_pressed = True
+            self.two_buttons_pressed = True
 
         # Trim left/right doubled
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_LEFT"])) and not self.two_buttons_pressed:
             self.cmd_do_trim(("", "trim_f_t", "1", "-10"))
-            self.one_button_pressed = True
+            self.two_buttons_pressed = True
 
         # Trim forward/backward
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
             self.cmd_do_trim(("", "trim_dist", "0", "0.05"))
-            self.one_button_pressed = True
+            self.two_buttons_pressed = True
 
         # Trim forward/backward
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
             self.cmd_do_trim(("", "trim_dist", "0", "-0.05"))
-            self.one_button_pressed = True
+            self.two_buttons_pressed = True
 
         # --------------
         # Idle joy reset
