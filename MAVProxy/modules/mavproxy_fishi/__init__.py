@@ -129,21 +129,6 @@ class Fishi(mp_module.MPModule):
     prev_time = time.time()
     prev_seq = 0
 
-    trim_presets = {
-        "camera": {
-            "index": 0,
-            "presets": (
-                ("", "cam_exp", "0", "1"),
-                ("", "cam_cbal", "0", "0.1"),
-                ("", "cam_cbal", "1", "0.1"),
-                ("", "cam_cbal", "2", "0.1"),
-                ("", "cam_cbal", "3", "0.1"),
-                ("", "off_t", "2", "0.01"),
-                ("", "trim_pitch", "0", "1"),
-            )
-        }
-    }
-
     messages = {
         "master": {t: None for t in msg_types_master},
         "GCS": {t: None for t in msg_types_gcs},
@@ -262,8 +247,6 @@ yaw_forward - fishi opt trim_yaw 0
             self.cmd_opt(args)
         elif args[0] == "do_trim":
             self.cmd_do_trim(args)
-        elif args[0] == "set_trim":
-            self.cmd_set_trim(args)
         elif args[0] == "reload_config":
             self.reload_config(args)
         elif args[0] == "rotate":
@@ -281,33 +264,6 @@ yaw_forward - fishi opt trim_yaw 0
             self.messages["opt"]["name"] = args[1]
             self.messages["opt"]["idx"] = int(args[2])
             self.messages["opt"]["trim"] = float(args[3])
-
-            self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
-        else:
-            pass
-
-    def cmd_set_trim(self, args):
-        if len(args) == 4:
-            self.messages["opt"]["name"] = args[1]
-            self.messages["opt"]["idx"] = int(args[2])
-            self.messages["opt"]["trim"] = float(args[3])
-
-            print("trim: " + self.messages["opt"]["name"] + "[" + str(self.messages["opt"]["idx"]) +
-                  "] : (+-)" + str(self.messages["opt"]["trim"]))
-        else:
-            pass
-
-    def cmd_joy_trim(self, direction):
-
-        if direction == "up":
-            if self.messages["opt"]["trim"] < 0:
-                self.messages["opt"]["trim"] = -self.messages["opt"]["trim"]
-
-            self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
-
-        elif direction == "down":
-            if self.messages["opt"]["trim"] > 0:
-                self.messages["opt"]["trim"] = -self.messages["opt"]["trim"]
 
             self.messages["opt"]["trim_seq"] = self.messages["opt"]["trim_seq"] + 1
         else:
@@ -393,98 +349,57 @@ yaw_forward - fishi opt trim_yaw 0
             self.__handle_manual_control(msg_dict)
 
     def __handle_manual_control(self, msg_dict):
+        # Show tabular live log in terminal.
         if (msg_dict["buttons"] == (key_map["LB"] | key_map["RB"])) and not self.two_buttons_pressed:
             self.live_log_toggle = not self.live_log_toggle
             self.two_buttons_pressed = True
 
+        # Enter fishi mode.
         if (msg_dict["buttons"] == key_map["A"]) and not self.one_button_pressed:
             self.master.set_mode(20)
             self.one_button_pressed = True
 
-        # if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
-        #     self.cmd_joy_trim("up")
-        #     self.one_button_pressed = True
-        #
-        # if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
-        #     self.cmd_joy_trim("down")
-        #     self.one_button_pressed = True
-
+        # Trim depth
         if (msg_dict["buttons"] == key_map["DIGITAL_UP"]) and not self.one_button_pressed:
             self.cmd_do_trim(("", "depth_trim", "0", "-0.1"))
             self.one_button_pressed = True
 
+        # Trim depth
         if (msg_dict["buttons"] == key_map["DIGITAL_DOWN"]) and not self.one_button_pressed:
             self.cmd_do_trim(("", "depth_trim", "0", "0.1"))
             self.one_button_pressed = True
 
-        if (msg_dict["buttons"] == key_map["X"]) and not self.one_button_pressed:
-            self.cmd_set_trim(("", "off_t", "2", "0.01"))
-            self.one_button_pressed = True
-
-        if (msg_dict["buttons"] == key_map["Y"]) and not self.one_button_pressed:
-            self.cmd_set_trim(("", "trim_yaw", "0", "1"))
-            self.one_button_pressed = True
-
+        # Trim left/right
         if (msg_dict["buttons"] == key_map["DIGITAL_RIGHT"]) and not self.one_button_pressed:
             self.cmd_do_trim(("", "trim_f_t", "1", "5"))
             self.one_button_pressed = True
 
+        # Trim left/right
         if (msg_dict["buttons"] == key_map["DIGITAL_LEFT"]) and not self.one_button_pressed:
             self.cmd_do_trim(("", "trim_f_t", "1", "-5"))
             self.one_button_pressed = True
 
+        # Trim left/right doubled
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_RIGHT"])) and not self.two_buttons_pressed:
-            self.cmd_do_trim(("", "trim_yaw", "0", "5"))
+            self.cmd_do_trim(("", "trim_f_t", "1", "10"))
             self.one_button_pressed = True
 
+        # Trim left/right doubled
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_LEFT"])) and not self.two_buttons_pressed:
-            self.cmd_do_trim(("", "trim_yaw", "0", "-5"))
+            self.cmd_do_trim(("", "trim_f_t", "1", "-10"))
             self.one_button_pressed = True
 
+        # Trim forward/backward
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
-            self.trim_presets["camera"]["index"] += 1
-            if self.trim_presets["camera"]["index"] >= len(self.trim_presets["camera"]["presets"]):
-                self.trim_presets["camera"]["index"] = len(self.trim_presets["camera"]["presets"]) - 1
-            self.cmd_set_trim(self.trim_presets["camera"]["presets"][self.trim_presets["camera"]["index"]])
-            self.two_buttons_pressed = True
+            self.cmd_do_trim(("", "trim_dist", "0", "0.05"))
+            self.one_button_pressed = True
 
+        # Trim forward/backward
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
-            self.trim_presets["camera"]["index"] -= 1
-            if self.trim_presets["camera"]["index"] < 0:
-                self.trim_presets["camera"]["index"] = 0
-            self.cmd_set_trim(self.trim_presets["camera"]["presets"][self.trim_presets["camera"]["index"]])
-            self.two_buttons_pressed = True
-
-        # if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
-        #     self.trim_presets["ctrl"]["index"] += 1
-        #     if self.trim_presets["ctrl"]["index"] >= len(self.trim_presets["ctrl"]["presets"]):
-        #         self.trim_presets["ctrl"]["index"] = len(self.trim_presets["ctrl"]["presets"]) - 1
-        #     self.cmd_set_trim(self.trim_presets["ctrl"]["presets"][self.trim_presets["ctrl"]["index"]])
-        #     self.two_buttons_pressed = True
-        #
-        # if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
-        #     self.trim_presets["ctrl"]["index"] -= 1
-        #     if self.trim_presets["ctrl"]["index"] < 0:
-        #         self.trim_presets["ctrl"]["index"] = 0
-        #     self.cmd_set_trim(self.trim_presets["ctrl"]["presets"][self.trim_presets["ctrl"]["index"]])
-        #     self.two_buttons_pressed = True
-
-        if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
-            self.cmd_joy_trim("up")
+            self.cmd_do_trim(("", "trim_dist", "0", "-0.05"))
             self.one_button_pressed = True
 
-        if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
-            self.cmd_joy_trim("down")
-            self.one_button_pressed = True
-
-        if (msg_dict["buttons"] == (key_map["middle"])) and not self.one_button_pressed:
-            self.cmd_opt(("", "ui.heat", "1"))
-            self.one_button_pressed = True
-
-        if (msg_dict["buttons"] == (key_map["middle"] | key_map["LB"])) and not self.two_buttons_pressed:
-            self.cmd_opt(("", "ui.heat", "0"))
-            self.two_buttons_pressed = True
-
+        # --------------
         # Idle joy reset
         if not msg_dict["buttons"] and self.one_button_pressed:
             self.one_button_pressed = False
