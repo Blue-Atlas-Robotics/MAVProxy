@@ -391,12 +391,12 @@ yaw_forward - fishi opt trim_yaw 0
 
         # Trim forward/backward
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
-            self.cmd_do_trim(("", "trim_dist", "0", "0.05"))
+            self.cmd_do_trim(("", "trim_dist", "0", "-0.05"))
             self.two_buttons_pressed = True
 
         # Trim forward/backward
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
-            self.cmd_do_trim(("", "trim_dist", "0", "-0.05"))
+            self.cmd_do_trim(("", "trim_dist", "0", "0.05"))
             self.two_buttons_pressed = True
 
         # --------------
