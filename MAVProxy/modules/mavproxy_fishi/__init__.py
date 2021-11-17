@@ -19,6 +19,7 @@ from MAVProxy.modules.lib import mp_settings
 import pyfishi.manager as mng
 import pyfishi.utils as utils
 from pymavlink import mavutil
+from pymavlink.dialects.v20 import ardupilotmega as mavlink2
 
 from .joystick import key_map
 
@@ -399,6 +400,16 @@ yaw_forward - fishi opt trim_yaw 0
             self.cmd_do_trim(("", "trim_dist", "0", "0.05"))
             self.two_buttons_pressed = True
 
+        # Trim pitch
+        if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_UP"])) and not self.two_buttons_pressed:
+            self.cmd_do_trim(("", "trim_pitch", "0", "-5"))
+            self.two_buttons_pressed = True
+
+        # Trim forward/backward
+        if (msg_dict["buttons"] == (key_map["LB"] | key_map["DIGITAL_DOWN"])) and not self.two_buttons_pressed:
+            self.cmd_do_trim(("", "trim_pitch", "0", "5"))
+            self.two_buttons_pressed = True
+
         # --------------
         # Idle joy reset
         if not msg_dict["buttons"] and self.one_button_pressed:
@@ -432,7 +443,21 @@ yaw_forward - fishi opt trim_yaw 0
                     chan8_raw,
                     rssi
                 )
+            # elif o["type"] == "qgc_msg":
+            #
+            #     for out_conn in self.mpstate.mav_outputs:
+            #         if out_conn.fd != self.master.fd:
+            #
+            #             status_msg = mavlink2.MAVLink_statustext_message(mavutil.mavlink.MAV_SEVERITY_NOTICE, o["value"].encode())
+            #
+            #             status_msg.pack(self.master.mav)
+            #
+            #             self.master.post_message(status_msg)
 
+
+
+
+                        # self.master.mav.statustext_send(mavutil.mavlink.MAV_SEVERITY_NOTICE, o["value"].encode())
             else:
                 pprint(o)
 
