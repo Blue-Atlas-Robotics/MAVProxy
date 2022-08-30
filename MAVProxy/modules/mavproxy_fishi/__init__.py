@@ -380,6 +380,11 @@ yaw_forward - fishi opt trim_yaw 0
             self.cmd_do_trim(("", "trim_f_t", "1", "-5"))
             self.one_button_pressed = True
 
+        # Enter fishi horizontal mode.
+        if (msg_dict["buttons"] == (key_map["A"] | key_map["LB"])) and not self.two_buttons_pressed:
+            self.master.set_mode(20)
+            self.two_buttons_pressed = True
+            
         # Trim left/right doubled
         if (msg_dict["buttons"] == (key_map["RB"] | key_map["DIGITAL_RIGHT"])) and not self.two_buttons_pressed:
             self.cmd_do_trim(("", "trim_f_t", "1", "10"))
